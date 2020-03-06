@@ -34,7 +34,7 @@ class CHS_DataSet(Dataset):
 		missing_storms = os.path.join(path_to_data, 'MissingStorms_20.txt')
 		missing_storms = pd.read_csv(missing_storms, sep=" ", header=None)
 		path_to_data = os.path.join(path_to_data, 'StormConditions.csv')
-		df = pd.read_csv(path_to_data)
+		df = pd.read_csv(path_to_data, dtype=float)
 		df = df[~df['StormID'].isin(missing_storms[0])]
 		data = df[['StormID', 'TrackID', 'CentralPressureDeficit', 
 					'RadiusMaxWinds','TranslationalSpeed']].values
@@ -42,11 +42,11 @@ class CHS_DataSet(Dataset):
 
 	def read_datamax(self, path_to_data, savepoints):
 		""" Reading the output/target conditions.
-			Returns a matrix of maximum surge vlaues. 
+			Returns a matrix of maximum surge values. 
 			Each row corresponds to a storm, and each
 			column corresponds to a save point."""
 		path_to_data = os.path.join(path_to_data, 'Max_Surge', 'max_surge.csv')
-		df = pd.read_csv(path_to_data)
+		df = pd.read_csv(path_to_data, dtype=float)
 		sp_list = ['Storm_ID']
 		for sp in savepoints:
 			sp_list.append('sp_{}'.format(sp))
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 	train_test_split = 0.8		# ratio to split test and train data
 
 	# dataset class
-	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, max_surge=False)
+	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, max_surge=True)
 	print('setup dataset class')
 
 	# computing size of train and test datasets
