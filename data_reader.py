@@ -34,7 +34,7 @@ class CHS_DataSet(Dataset):
 		missing_storms = os.path.join(path_to_data, 'MissingStorms_20.txt')
 		missing_storms = pd.read_csv(missing_storms, sep=" ", header=None)
 		path_to_data = os.path.join(path_to_data, 'StormConditions.csv')
-		df = pd.read_csv(path_to_data, dtype=float)
+		df = pd.read_csv(path_to_data)
 		df = df[~df['StormID'].isin(missing_storms[0])]
 		data = df[['StormID', 'TrackID', 'CentralPressureDeficit', 
 					'RadiusMaxWinds','TranslationalSpeed']].values
@@ -46,12 +46,13 @@ class CHS_DataSet(Dataset):
 			Each row corresponds to a storm, and each
 			column corresponds to a save point."""
 		path_to_data = os.path.join(path_to_data, 'Max_Surge', 'max_surge.csv')
-		df = pd.read_csv(path_to_data, dtype=float)
+		df = pd.read_csv(path_to_data)
 		sp_list = ['Storm_ID']
 		for sp in savepoints:
 			sp_list.append('sp_{}'.format(sp))
 
 		df = df[sp_list]
+		df.dropna(axis=1, inplace=True) #drop columns that are missing values
 		df.set_index(['Storm_ID'], inplace=True)
 		data = df.values
 		return data
@@ -89,6 +90,7 @@ class CHS_DataSet(Dataset):
 if __name__ == "__main__":
 	# path to data
 	path_to_data = os.path.join(os.getcwd(), '..', 'data')
+	# path_to_data = os.path.join(os.getcwd(), 'data')
 	
 	""" defining bounding box """
 	# # large bounding box
