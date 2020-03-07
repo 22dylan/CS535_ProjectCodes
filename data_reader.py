@@ -42,7 +42,7 @@ class CHS_DataSet(Dataset):
 
 	def read_datamax(self, path_to_data, savepoints):
 		""" Reading the output/target conditions.
-			Returns a matrix of maximum surge values. 
+			Returns a matrix of maximum surge vlaues. 
 			Each row corresponds to a storm, and each
 			column corresponds to a save point."""
 		path_to_data = os.path.join(path_to_data, 'Max_Surge', 'max_surge.csv')
@@ -52,7 +52,6 @@ class CHS_DataSet(Dataset):
 			sp_list.append('sp_{}'.format(sp))
 
 		df = df[sp_list]
-		df.dropna(axis=1, inplace=True) #drop columns that are missing values
 		df.set_index(['Storm_ID'], inplace=True)
 		data = df.values
 		return data
@@ -66,9 +65,9 @@ class CHS_DataSet(Dataset):
 		data = data[:,savepoints-1]		# isolating savepoints in dataset
 
 		""" padding data with nan values so that all time series are the same 
-			size. the value of NNNN is used b/c it's the largest of all time
+			size. the value of 1980 is used b/c it's the largest of all time
 			series """
-		pad_width = 2000 - np.shape(data)[0] 
+		pad_width = 1980 - np.shape(data)[0] 
 		data = np.pad(data, ((0,pad_width), (0,0)), 
 					'constant', constant_values=np.nan)
 		return data
@@ -90,7 +89,6 @@ class CHS_DataSet(Dataset):
 if __name__ == "__main__":
 	# path to data
 	path_to_data = os.path.join(os.getcwd(), '..', 'data')
-	# path_to_data = os.path.join(os.getcwd(), 'data')
 	
 	""" defining bounding box """
 	# # large bounding box
@@ -104,7 +102,7 @@ if __name__ == "__main__":
 	train_test_split = 0.8		# ratio to split test and train data
 
 	# dataset class
-	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, max_surge=True)
+	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, max_surge=False)
 	print('setup dataset class')
 
 	# computing size of train and test datasets
