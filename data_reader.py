@@ -9,14 +9,18 @@ from torch.utils.data import DataLoader
 
 class CHS_DataSet(Dataset):
 
-	def __init__(self, path_to_data, xmin, xmax, ymin, ymax, max_surge=True):
-		self.max_surge = max_surge
+	def __init__(self, path_to_data, xmin, xmax, ymin, ymax, ts_input=False,
+		ts_output=False):
+
+		self.ts_output = ts_output
+
 		self.savepoints = self.identify_savepoints(path_to_data, 
 										xmin, xmax, ymin, ymax)
 		# getting input data
-		self.storm_conds = self.read_storm_conds(path_to_data)
-		if self.max_surge == True:
-			self.target = self.read_datamax(path_to_data, self.savepoints)
+
+		self.storm_conds = self.read_storm_conds(path_to_data, ts_input)
+		if self.ts_output == False:
+			self.target = self.read_data_max(path_to_data, self.savepoints)
 
 	def identify_savepoints(self, path_to_data, xmin, xmax, ymin, ymax):
 		path_to_data = os.path.join(path_to_data, 
@@ -28,19 +32,45 @@ class CHS_DataSet(Dataset):
 		data = data[data['SP_Latitude'].between(ymin, ymax, inclusive=True)]
 		return data['SavePointID']
 
-	def read_storm_conds(self, path_to_data):
+	def read_storm_conds(self, path_to_data, ts_input):
 		""" reading the input storm conditions. these are used as input to the 
 			neural net"""
 		missing_storms = os.path.join(path_to_data, 'MissingStorms_20.txt')
 		missing_storms = pd.read_csv(missing_storms, sep=" ", header=None)
-		path_to_data = os.path.join(path_to_data, 'StormConditions.csv')
-		df = pd.read_csv(path_to_data)
-		df = df[~df['StormID'].isin(missing_storms[0])]
-		data = df[['StormID', 'TrackID', 'CentralPressureDeficit', 
-					'RadiusMaxWinds','TranslationalSpeed']].values
+		if ts_input == True:
+			path_to_data = os.path.join(path_to_data, 
+						'NACCS_TS_Sim0_Post0_ST_TROP_STcond.csv')
+			df = pd.read_csv(
+					path_to_data, 
+					skiprows = [1,2],
+					usecols=['Storm ID', 'Central Pressure', 
+						'Far Field Pressure', 'Forward Speed', 'Heading', 
+						'Holland B1', 'Radius Max Winds', 'Radius Pressure 1', 
+						'Storm Latitude', 'Storm Longitude']
+					)
+
+			df = df[~df['Storm ID'].isin(missing_storms[0])]
+			data_temp = df.values
+			unique_storms = np.unique(data_temp[:,0])
+			data = np.empty((len(unique_storms), 337, 9))
+			data[:] = np.nan
+			for i, storm_id in enumerate(unique_storms):
+				storm_data = data_temp[data_temp[:,0]==storm_id, 1:]
+				pad_width = 337 - len(storm_data) 
+				storm_data = np.pad(storm_data, ((0,pad_width), (0,0)), 
+							'constant', constant_values=np.nan)
+				data[i] = storm_data
+
+		elif ts_input == False:
+			path_to_data = os.path.join(path_to_data, 'StormConditions.csv')
+			df = pd.read_csv(path_to_data)
+			df = df[~df['StormID'].isin(missing_storms[0])]
+			data = df[['StormID', 'TrackID', 'CentralPressureDeficit', 
+						'RadiusMaxWinds','TranslationalSpeed']].values
+	
 		return data
 
-	def read_datamax(self, path_to_data, savepoints):
+	def read_data_max(self, path_to_data, savepoints):
 		""" Reading the output/target conditions.
 			Returns a matrix of maximum surge vlaues. 
 			Each row corresponds to a storm, and each
@@ -56,7 +86,7 @@ class CHS_DataSet(Dataset):
 		data = df.values
 		return data
 
-	def read_data(self, path_to_data, savepoints, storm):
+	def read_data_ts(self, path_to_data, savepoints, storm):
 		path_to_data = os.path.join(path_to_data, 'CHS_Storms_raw')
 		file_name = ('NACCS_TP_{0:04d}_SYN_Tides_0_SLC_0_RFC_0_surge_all.mat' 
 							.format(storm))
@@ -78,11 +108,12 @@ class CHS_DataSet(Dataset):
 	def __getitem__(self, idx):
 		storms = self.storm_conds[:,0]
 		data_val = self.storm_conds[:,1:]
-		data_val = data_val[idx]	
-		if self.max_surge == True:
+		data_val = data_val[idx]
+
+		if self.ts_output == False:
 			target = self.target[idx]
 		else:
-			target = self.read_data(path_to_data, self.savepoints, storms[idx])
+			target = self.read_data_ts(path_to_data, self.savepoints, storms[idx])
 
 		return data_val, target
 
@@ -102,7 +133,8 @@ if __name__ == "__main__":
 	train_test_split = 0.8		# ratio to split test and train data
 
 	# dataset class
-	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, max_surge=False)
+	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, ts_input=True,
+		ts_output=False)
 	print('setup dataset class')
 
 	# computing size of train and test datasets
