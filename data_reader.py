@@ -11,14 +11,15 @@ class CHS_DataSet(Dataset):
 
 	def __init__(self, path_to_data, xmin, xmax, ymin, ymax, ts_input=False,
 		ts_output=False):
-
 		self.ts_output = ts_output
-
 		self.savepoints = self.identify_savepoints(path_to_data, 
 										xmin, xmax, ymin, ymax)
-		# getting input data
 
+		# getting input data
 		self.storm_conds = self.read_storm_conds(path_to_data, ts_input)
+		
+		""" if not using time series, read the entire output data set while
+			initiliazing the class. """
 		if self.ts_output == False:
 			self.target = self.read_data_max(path_to_data, self.savepoints)
 
@@ -38,6 +39,21 @@ class CHS_DataSet(Dataset):
 		missing_storms = os.path.join(path_to_data, 'MissingStorms_20.txt')
 		missing_storms = pd.read_csv(missing_storms, sep=" ", header=None)
 		if ts_input == True:
+			""" - if reading in the time series as input, each storm has an input
+					with dimentions of 377x9. 
+				- 337 is used b/c it's the longest of the input time series
+				- all others are padded with NaNs
+				- input columsn are as follows:
+					0: Central Pressure
+					1: Far Field pressure
+					2: Forward Speed
+					3: Heading
+					4: Holland B1
+					5: Radius Max Winds
+					6: Radius pressure diff
+					7: Latitude
+					8: Longitude
+			"""
 			path_to_data = os.path.join(path_to_data, 
 						'NACCS_TS_Sim0_Post0_ST_TROP_STcond.csv')
 			df = pd.read_csv(
@@ -60,12 +76,22 @@ class CHS_DataSet(Dataset):
 				storm_data = np.pad(storm_data, ((0,pad_width), (0,0)), 
 							'constant', constant_values=np.nan)
 				data[i] = storm_data
+			self.storms = unique_storms.astype(int)
 
 		elif ts_input == False:
+			""" - if not reading time series as input, each storm has an input
+					with dimentions of 1x4. 
+				- input values are as follows:
+					0: TrackID
+					1: Central Pressure Deficit
+					2: Radius to Max Winds
+					3: Translation Speed
+			"""
 			path_to_data = os.path.join(path_to_data, 'StormConditions.csv')
 			df = pd.read_csv(path_to_data)
 			df = df[~df['StormID'].isin(missing_storms[0])]
-			data = df[['StormID', 'TrackID', 'CentralPressureDeficit', 
+			self.storms = df['StormID'].astype(int).values
+			data = df[['TrackID', 'CentralPressureDeficit', 
 						'RadiusMaxWinds','TranslationalSpeed']].values
 	
 		return data
@@ -92,7 +118,7 @@ class CHS_DataSet(Dataset):
 							.format(storm))
 		mat_file = os.path.join(path_to_data, file_name)
 		data = io.loadmat(mat_file)['surge']	# reading in data
-		data = data[:,savepoints-1]		# isolating savepoints in dataset
+		data = data[:,savepoints-1]			# isolating savepoints in dataset
 
 		""" padding data with nan values so that all time series are the same 
 			size. the value of 1980 is used b/c it's the largest of all time
@@ -106,14 +132,11 @@ class CHS_DataSet(Dataset):
 		return len(self.storm_conds)
 
 	def __getitem__(self, idx):
-		storms = self.storm_conds[:,0]
-		data_val = self.storm_conds[:,1:]
-		data_val = data_val[idx]
-
+		data_val = self.storm_conds[idx]
 		if self.ts_output == False:
 			target = self.target[idx]
 		else:
-			target = self.read_data_ts(path_to_data, self.savepoints, storms[idx])
+			target = self.read_data_ts(path_to_data, self.savepoints, self.storms[idx])
 
 		return data_val, target
 
@@ -134,7 +157,7 @@ if __name__ == "__main__":
 
 	# dataset class
 	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, ts_input=True,
-		ts_output=False)
+		ts_output=True)
 	print('setup dataset class')
 
 	# computing size of train and test datasets
