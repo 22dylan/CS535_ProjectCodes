@@ -10,14 +10,14 @@ from torch.utils.data import DataLoader
 class CHS_DataSet(Dataset):
 
 	def __init__(self, path_to_data, xmin, xmax, ymin, ymax, ts_input=False,
-		ts_output=False):
+					ts_output=False, pad_type=np.nan):
 		self.ts_output = ts_output
+		self.pad_type = pad_type
 		self.savepoints = self.identify_savepoints(path_to_data, 
 										xmin, xmax, ymin, ymax)
 
 		# getting input data
 		self.storm_conds = self.read_storm_conds(path_to_data, ts_input)
-		
 		""" if not using time series, read the entire output data set while
 			initiliazing the class. """
 		if self.ts_output == False:
@@ -40,7 +40,7 @@ class CHS_DataSet(Dataset):
 		missing_storms = pd.read_csv(missing_storms, sep=" ", header=None)
 		if ts_input == True:
 			""" - if reading in the time series as input, each storm has an input
-					with dimentions of 377x9. 
+					with dimentions of 337x9. 
 				- 337 is used b/c it's the longest of the input time series
 				- all others are padded with NaNs
 				- input columsn are as follows:
@@ -63,18 +63,18 @@ class CHS_DataSet(Dataset):
 						'Far Field Pressure', 'Forward Speed', 'Heading', 
 						'Holland B1', 'Radius Max Winds', 'Radius Pressure 1', 
 						'Storm Latitude', 'Storm Longitude']
-					)
+							)
 
 			df = df[~df['Storm ID'].isin(missing_storms[0])]
 			data_temp = df.values
 			unique_storms = np.unique(data_temp[:,0])
 			data = np.empty((len(unique_storms), 337, 9))
-			data[:] = np.nan
+			data[:] = self.pad_type
 			for i, storm_id in enumerate(unique_storms):
 				storm_data = data_temp[data_temp[:,0]==storm_id, 1:]
 				pad_width = 337 - len(storm_data) 
 				storm_data = np.pad(storm_data, ((0,pad_width), (0,0)), 
-							'constant', constant_values=np.nan)
+							'constant', constant_values=self.pad_type)
 				data[i] = storm_data
 			self.storms = unique_storms.astype(int)
 
@@ -109,6 +109,7 @@ class CHS_DataSet(Dataset):
 
 		df = df[sp_list]
 		df.set_index(['Storm_ID'], inplace=True)
+		df.fillna(0, inplace=True)		# note: want to confirm this with team
 		data = df.values
 		return data
 
@@ -125,7 +126,7 @@ class CHS_DataSet(Dataset):
 			series """
 		pad_width = 1980 - np.shape(data)[0] 
 		data = np.pad(data, ((0,pad_width), (0,0)), 
-					'constant', constant_values=np.nan)
+					'constant', constant_values=self.pad_type)
 		return data
 
 	def __len__(self):
@@ -157,7 +158,7 @@ if __name__ == "__main__":
 
 	# dataset class
 	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, ts_input=True,
-		ts_output=True)
+		ts_output=False)
 	print('setup dataset class')
 
 	# computing size of train and test datasets
