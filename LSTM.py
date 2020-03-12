@@ -24,6 +24,10 @@ from torch.utils.data import DataLoader
 from data_reader import CHS_DataSet
 
 torch.manual_seed(1337)
+
+#GLOBAL VARIABLE TO SET WHETHER TO USE GPU FOR TRAINING OR NOT
+USE_GPU = True
+
 class Net(nn.Module):
     """
     Net Summary:
@@ -56,7 +60,11 @@ class Net(nn.Module):
     
     def forward(self, x):
         batch_size = np.shape(x)[0]
-        hidden = (torch.zeros(self.n_layers, batch_size, self.hidden_size),
+        if USE_GPU == True:
+            hidden = (torch.zeros(self.n_layers, batch_size, self.hidden_size).cuda(),
+                    torch.zeros(self.n_layers, batch_size, self.hidden_size).cuda())
+        else:
+            hidden = (torch.zeros(self.n_layers, batch_size, self.hidden_size),
                   torch.zeros(self.n_layers, batch_size, self.hidden_size))
         x = x.float()
         out, hidden = self.lstm(x, hidden)
@@ -65,7 +73,7 @@ class Net(nn.Module):
         return out
 
 # evaluates regression type prediction
-def eval_net(dataloader, gpu):
+def eval_net(dataloader):
     correct = 0
     total = 0
     avg_loss = 0
@@ -73,9 +81,10 @@ def eval_net(dataloader, gpu):
     criterion = nn.MSELoss(reduction='mean')
     for data in dataloader:
         inputs, targets = data
-        if gpu==True:
+        if USE_GPU == True:
             inputs, targets = Variable(inputs).cuda(), Variable(targets).cuda()
-        inputs, targets = Variable(inputs), Variable(targets)
+        else:
+            inputs, targets = Variable(inputs), Variable(targets)
 
         outputs = net(inputs.float())
         predicted = outputs[:]
@@ -94,7 +103,6 @@ def eval_net(dataloader, gpu):
     return avg_loss/total, correct/total, outputs, targets
 
 if __name__ == "__main__":
-    gpu = False
     BATCH_SIZE = 50     # mini_batch size
     MAX_EPOCH = 100      # maximum epoch to train
     hidden_size = 25    # size of hidden layer
@@ -149,17 +157,16 @@ if __name__ == "__main__":
     print('\toutput_size/num save points: {}' .format(output_size))
     print('\tn_layers: {}' .format(n_layers))
 
-    if gpu == True:
+    if USE_GPU == True:
         net = Net(input_size=input_size, 
                   hidden_size = hidden_size,
                   output_size=output_size, 
                   n_layers=n_layers).cuda()
-
-    net = Net(input_size=input_size, 
-              hidden_size = hidden_size,
-              output_size=output_size, 
-              n_layers=n_layers)
-
+    else:
+        net = Net(input_size=input_size, 
+                hidden_size = hidden_size,
+                output_size=output_size, 
+                n_layers=n_layers)
     net = net.float()
     net.train()
 
@@ -182,9 +189,10 @@ if __name__ == "__main__":
             inputs, targets = data
 
             # wrap them in Variable
-            if gpu == True:
+            if USE_GPU == True:
                 inputs, targets = Variable(inputs).cuda(), Variable(targets).cuda()
-            inputs, targets = Variable(inputs), Variable(targets)
+            else:
+                inputs, targets = Variable(inputs), Variable(targets)
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -204,8 +212,8 @@ if __name__ == "__main__":
                 running_loss = 0.0
 
         print('    Finish training this EPOCH, start evaluating...')
-        train_loss, train_acc, outputs, targets = eval_net(trn_loader, gpu)
-        test_loss, test_acc, outputs, targets = eval_net(tst_loader, gpu)
+        train_loss, train_acc, outputs, targets = eval_net(trn_loader)
+        test_loss, test_acc, outputs, targets = eval_net(tst_loader)
         print('EPOCH: %d train_loss: %.5f train_acc: %.5f test_loss: %.5f test_acc %.5f' %
                 (epoch+1, train_loss, train_acc, test_loss, test_acc))
 
