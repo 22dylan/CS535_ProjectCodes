@@ -26,7 +26,7 @@ from data_reader import CHS_DataSet
 torch.manual_seed(1337)
 
 #GLOBAL VARIABLE TO SET WHETHER TO USE GPU FOR TRAINING OR NOT
-USE_GPU = True
+USE_GPU = False
 
 class Net(nn.Module):
     """
@@ -90,6 +90,7 @@ def eval_net(dataloader):
         predicted = outputs[:]
         # _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
+
         # correct += (predicted == targets.data).sum()
         correct += abs(targets - predicted).sum()
 
@@ -97,10 +98,10 @@ def eval_net(dataloader):
         avg_loss += loss.item()
     net.train() # Why would I do this? To switch model back to train mode
 
-    # correct = 0 #should delete when can
-    # total = 1 #should delete when can
-    # return avg_loss, correct.float() / total
-    return avg_loss/total, correct/total, outputs, targets
+    # average error across all save points (in meters)
+    correct = correct/(total*targets.size(1))
+
+    return avg_loss/total, correct, outputs, targets
 
 if __name__ == "__main__":
     BATCH_SIZE = 50     # mini_batch size
@@ -115,13 +116,17 @@ if __name__ == "__main__":
     # path_to_data = os.path.join(os.getcwd(), 'data')
 	
     """ defining bounding box """
-    # # large bounding box
-    # xmin, xmax = -74.619, -73.397
-    # ymin, ymax = 40.080, 40.892
-
-    # smaller bounding box
+    # small bounding box
     xmin, xmax = -74.2754, -73.9374
     ymin, ymax = 40.4041, 40.6097
+
+    # # medium bounding box
+    # xmin, xmax = -74.6764, -69.5103
+    # ymin, ymax = 39.9218, 41.8667
+
+    # # large bounding box 
+    # xmin, xmax = -77.9897, -66.2786
+    # ymin, ymax = 35.7051, 45.5341
 
     train_test_split = 0.8		# ratio to split test and train data
 
