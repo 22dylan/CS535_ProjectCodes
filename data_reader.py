@@ -111,6 +111,7 @@ class CHS_DataSet(Dataset):
 		df.set_index(['Storm_ID'], inplace=True)
 		df.fillna(0, inplace=True)		# note: want to confirm this with team
 		data = df.values
+		self.sp_list = sp_list
 		return data
 
 	def read_data_ts(self, path_to_data, savepoints, storm):
@@ -146,11 +147,7 @@ if __name__ == "__main__":
 	path_to_data = os.path.join(os.getcwd(), '..', 'data')
 	
 	""" defining bounding box """
-	# # large bounding box
-	# xmin, xmax = -74.619, -73.397
-	# ymin, ymax = 40.080, 40.892
-
-	# smaller bounding box
+	# small bounding box
 	xmin, xmax = -74.2754, -73.9374
 	ymin, ymax = 40.4041, 40.6097
 	
@@ -177,8 +174,6 @@ if __name__ == "__main__":
 	print('converted datasets to dataloaders')
 	for i, data in enumerate(trn_loader, 0):
 		inputs, targets = data
-
-		# neural network
 
 
 

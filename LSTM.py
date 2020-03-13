@@ -79,7 +79,7 @@ def eval_net(dataloader):
     avg_loss = 0
     net.eval()
     criterion = nn.MSELoss(reduction='mean')
-    for data in dataloader:
+    for i, data in enumerate(dataloader):
         inputs, targets = data
         if USE_GPU == True:
             inputs, targets = Variable(inputs).cuda(), Variable(targets).cuda()
@@ -87,25 +87,31 @@ def eval_net(dataloader):
             inputs, targets = Variable(inputs), Variable(targets)
 
         outputs = net(inputs.float())
+
+        if i == 0:
+            all_outputs = outputs.detach().numpy()
+            all_targets = targets.detach().numpy()
+        else:
+            all_outputs = np.vstack((all_outputs, outputs.detach().numpy()))
+            all_targets = np.vstack((all_targets, targets.detach().numpy()))
+
         predicted = outputs[:]
-        # _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
 
-        # correct += (predicted == targets.data).sum()
         correct += abs(targets - predicted).sum()
-
         loss = criterion(outputs.float(), targets.float())
         avg_loss += loss.item()
+
     net.train() # Why would I do this? To switch model back to train mode
 
     # average error across all save points (in meters)
     correct = correct/(total*targets.size(1))
 
-    return avg_loss/total, correct, outputs, targets
+    return avg_loss/total, correct, all_outputs, all_targets
 
 if __name__ == "__main__":
     BATCH_SIZE = 50     # mini_batch size
-    MAX_EPOCH = 100      # maximum epoch to train
+    MAX_EPOCH = 10       # maximum epoch to train
     hidden_size = 25    # size of hidden layer
     n_layers = 1        # number of lstm layers
 
@@ -169,9 +175,10 @@ if __name__ == "__main__":
                   n_layers=n_layers).cuda()
     else:
         net = Net(input_size=input_size, 
-                hidden_size = hidden_size,
-                output_size=output_size, 
-                n_layers=n_layers)
+                  hidden_size = hidden_size,
+                  output_size=output_size, 
+                  n_layers=n_layers)
+    
     net = net.float()
     net.train()
 
@@ -219,6 +226,16 @@ if __name__ == "__main__":
         print('    Finish training this EPOCH, start evaluating...')
         train_loss, train_acc, outputs, targets = eval_net(trn_loader)
         test_loss, test_acc, outputs, targets = eval_net(tst_loader)
+        if epoch == 0:
+            outputs_save = outputs
+            targets_save = targets
+            best_acc = float(test_acc)
+        
+        if test_acc < best_acc:
+            outputs_save = outputs
+            targets_save = targets
+            best_acc = float(test_acc)
+
         print('EPOCH: %d train_loss: %.5f train_acc: %.5f test_loss: %.5f test_acc %.5f' %
                 (epoch+1, train_loss, train_acc, test_loss, test_acc))
 
@@ -235,6 +252,16 @@ if __name__ == "__main__":
         # for ii in range(outputs.size(0)):
         #     writer.add_scalars('Comparing Predictions', {'Prediction': outputs[ii][0], 'Reality': surge_levels[ii][0]},iii)
         #     iii+=1
+
+    sp = dataset.sp_list[1:]
+    model_output = pd.DataFrame(data=outputs_save, columns=sp)
+    model_targets = pd.DataFrame(data=targets_save, columns=sp)
+
+    path_out = os.path.join('LSTM_training_results', 'Model_results', '{}_predict.csv' .format(key))
+    model_output.to_csv(path_out, index=False)
+
+    path_out = os.path.join('LSTM_training_results', 'Model_results', '{}_target.csv' .format(key))
+    model_targets.to_csv(path_out, index=False)
 
     output = pd.DataFrame()
     output['epoch'] = epoch_out
