@@ -26,7 +26,7 @@ from data_reader import CHS_DataSet
 torch.manual_seed(1337)
 
 #GLOBAL VARIABLE TO SET WHETHER TO USE GPU FOR TRAINING OR NOT
-USE_GPU = False
+USE_GPU = True
 
 class Net(nn.Module):
     """
@@ -73,7 +73,7 @@ class Net(nn.Module):
         return out
 
 # evaluates regression type prediction
-def eval_net(dataloader):
+def eval_net(net, dataloader):
     correct = 0
     total = 0
     avg_loss = 0
@@ -87,13 +87,21 @@ def eval_net(dataloader):
             inputs, targets = Variable(inputs), Variable(targets)
 
         outputs = net(inputs.float())
-
-        if i == 0:
-            all_outputs = outputs.detach().numpy()
-            all_targets = targets.detach().numpy()
+        
+        if USE_GPU == True:
+            if i == 0:
+                all_outputs = outputs.cpu().detach().numpy()
+                all_targets = targets.cpu().detach().numpy()
+            else:
+                all_outputs = np.vstack((all_outputs, outputs.cpu().detach().numpy()))
+                all_targets = np.vstack((all_targets, targets.cpu().detach().numpy()))
         else:
-            all_outputs = np.vstack((all_outputs, outputs.detach().numpy()))
-            all_targets = np.vstack((all_targets, targets.detach().numpy()))
+            if i == 0:
+                all_outputs = outputs.detach().numpy()
+                all_targets = targets.detach().numpy()
+            else:
+                all_outputs = np.vstack((all_outputs, outputs.detach().numpy()))
+                all_targets = np.vstack((all_targets, targets.detach().numpy()))
 
         predicted = outputs[:]
         total += targets.size(0)
@@ -109,31 +117,16 @@ def eval_net(dataloader):
 
     return avg_loss/total, correct, all_outputs, all_targets
 
-if __name__ == "__main__":
-    BATCH_SIZE = 50     # mini_batch size
-    MAX_EPOCH = 10       # maximum epoch to train
-    hidden_size = 25    # size of hidden layer
-    n_layers = 1        # number of lstm layers
 
-    key = 'B{}_h{}_l{}' .format(BATCH_SIZE, hidden_size, n_layers)
+def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
+            box_size, xmin, xmax, ymin, ymax):
+
+    key = 'LSTM_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
 
     # path to data
     path_to_data = os.path.join(os.getcwd(), '..', 'data')
     # path_to_data = os.path.join(os.getcwd(), 'data')
 	
-    """ defining bounding box """
-    # small bounding box
-    xmin, xmax = -74.2754, -73.9374
-    ymin, ymax = 40.4041, 40.6097
-
-    # # medium bounding box
-    # xmin, xmax = -74.6764, -69.5103
-    # ymin, ymax = 39.9218, 41.8667
-
-    # # large bounding box 
-    # xmin, xmax = -77.9897, -66.2786
-    # ymin, ymax = 35.7051, 45.5341
-
     train_test_split = 0.8		# ratio to split test and train data
 
     # dataset class
@@ -224,8 +217,8 @@ if __name__ == "__main__":
                 running_loss = 0.0
 
         print('    Finish training this EPOCH, start evaluating...')
-        train_loss, train_acc, outputs, targets = eval_net(trn_loader)
-        test_loss, test_acc, outputs, targets = eval_net(tst_loader)
+        train_loss, train_acc, outputs, targets = eval_net(net, trn_loader)
+        test_loss, test_acc, outputs, targets = eval_net(net, tst_loader)
         if epoch == 0:
             outputs_save = outputs
             targets_save = targets
@@ -276,3 +269,30 @@ if __name__ == "__main__":
     print('Finished Training')
     print('Saving model...')
     torch.save(net.state_dict(), 'template_model.pth')
+
+
+if __name__ == "__main__":
+    BATCH_SIZE = 50     # mini_batch size
+    MAX_EPOCH = 10       # maximum epoch to train
+    hidden_size = 25    # size of hidden layer
+    n_layers = 1        # number of lstm layers
+    
+    """ defining bounding box """
+    # small bounding box
+    xmin, xmax = -74.2754, -73.9374
+    ymin, ymax = 40.4041, 40.6097
+    box_size = 'S'
+
+    # # medium bounding box
+    # xmin, xmax = -74.6764, -69.5103
+    # ymin, ymax = 39.9218, 41.8667
+    # box_size = 'M'
+
+    # # large bounding box 
+    # xmin, xmax = -77.9897, -66.2786
+    # ymin, ymax = 35.7051, 45.5341
+    # box_size = 'L'
+
+    #run the model
+    main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
+            box_size, xmin, xmax, ymin, ymax)

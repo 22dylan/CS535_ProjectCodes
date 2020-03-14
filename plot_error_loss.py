@@ -31,7 +31,7 @@ plt.title('Average Error')
 plt.xlabel('Epoch #')
 plt.ylabel('Error (m)')
 #save error plot
-plt.savefig('result_plots/{}_Error_plot.png'.format(key), transparent=False)
+plt.savefig('LSTM_training_results/result_plots/{}_Error_plot.png'.format(key), transparent=False)
 
 #plot loss
 plt.figure(2)
@@ -42,7 +42,7 @@ plt.title('Loss')
 plt.xlabel('Epoch #')
 plt.ylabel('Loss')
 #save loss plot
-plt.savefig('result_plots/{}_Loss_plot.png'.format(key), transparent=False)
+plt.savefig('LSTM_training_results/result_plots/{}_Loss_plot.png'.format(key), transparent=False)
 
 
 plt.show()
