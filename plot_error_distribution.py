@@ -15,11 +15,11 @@ BATCH_SIZE = 15     # mini_batch size
 MAX_EPOCH = 50      # maximum epoch to train
 hidden_size = 100    # size of hidden layer
 n_layers = 1        # number of lstm layers
-box_size = 'S' #'M' 'L'
+box_size = 'L' #'M' 'L'
 
 # key = 'LSTM_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
-key = 'LSTM_LL1_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
-# key = 'LSTM_LL2_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
+# key = 'LSTM_LL1_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
+key = 'LSTM_LL2_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
 
 
 path_to_predict = os.path.join(os.getcwd(), 'LSTM_training_results', 'Model_results', '{}_predict.csv'.format(key))
