@@ -10,12 +10,13 @@ import seaborn as sns
 plt.style.use('seaborn')
 
 #Select which key to plot results for
-BATCH_SIZE = 50     # mini_batch size
+BATCH_SIZE = 15     # mini_batch size
 MAX_EPOCH = 100      # maximum epoch to train
-hidden_size = 25    # size of hidden layer
+hidden_size = 100    # size of hidden layer
 n_layers = 1        # number of lstm layers
+box_size = 'S' #'M' 'L'
 
-key = 'B{}_h{}_l{}' .format(BATCH_SIZE, hidden_size, n_layers)
+key = 'LSTM_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
 
 
 path_to_results = os.path.join(os.getcwd(), 'LSTM_training_results', '{}_results.csv'.format(key))

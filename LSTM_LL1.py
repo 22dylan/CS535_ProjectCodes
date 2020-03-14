@@ -45,16 +45,18 @@ class Net(nn.Module):
             8) Longitude
     Net Output: Max Surge values at each save point
     """
-    def __init__(self, input_size, output_size, n_layers=1):
+    def __init__(self, input_size, hidden_size, output_size, n_layers=1):
         super(Net, self).__init__()
-        self.hidden_size = output_size
+        self.hidden_size = hidden_size
         self.n_layers = n_layers
 
         self.lstm = nn.LSTM(input_size=input_size, 
-                          hidden_size=output_size, 
+                          hidden_size=hidden_size, 
                           num_layers=n_layers, 
                           batch_first=True
                         )
+
+        self.fc = nn.Linear(hidden_size, output_size)
     
     def forward(self, x):
         batch_size = np.shape(x)[0]
@@ -67,6 +69,7 @@ class Net(nn.Module):
         x = x.float()
         out, hidden = self.lstm(x, hidden)
         out = out[:,-1,:]
+        out = self.fc(out)
         return out
 
 # evaluates regression type prediction
@@ -118,7 +121,7 @@ def eval_net(net, dataloader):
 def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
             box_size, xmin, xmax, ymin, ymax):
 
-    key = 'LSTM_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
+    key = 'LSTM_LL1_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
 
     # path to data
     path_to_data = os.path.join(os.getcwd(), '..', 'data')
@@ -160,10 +163,12 @@ def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
 
     if USE_GPU == True:
         net = Net(input_size=input_size, 
+                  hidden_size = hidden_size,
                   output_size=output_size, 
                   n_layers=n_layers).cuda()
     else:
         net = Net(input_size=input_size, 
+                  hidden_size = hidden_size,
                   output_size=output_size, 
                   n_layers=n_layers)
     
@@ -269,7 +274,7 @@ def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
 if __name__ == "__main__":
     BATCH_SIZE = 50     # mini_batch size
     MAX_EPOCH = 10       # maximum epoch to train
-    hidden_size = 'NA'    # size of hidden layer
+    hidden_size = 25    # size of hidden layer
     n_layers = 1        # number of lstm layers
     
     """ defining bounding box """
