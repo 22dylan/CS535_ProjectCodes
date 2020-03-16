@@ -11,14 +11,15 @@ from sklearn.preprocessing import normalize
 class CHS_DataSet(Dataset):
 
 	def __init__(self, path_to_data, xmin, xmax, ymin, ymax, ts_input=False,
-					ts_output=False, pad_type=np.nan):
+					ts_output=False, pad_type=np.nan, ts_delete_step_size=0):
 		self.ts_output = ts_output
 		self.pad_type = pad_type
 		self.savepoints = self.identify_savepoints(path_to_data, 
 										xmin, xmax, ymin, ymax)
 
 		# getting input data
-		self.storm_conds = self.read_storm_conds(path_to_data, ts_input)
+		self.storm_conds = self.read_storm_conds(path_to_data, ts_input, 
+													ts_delete_step_size)
 		""" if not using time series, read the entire output data set while
 			initiliazing the class. """
 		if self.ts_output == False:
@@ -34,7 +35,7 @@ class CHS_DataSet(Dataset):
 		data = data[data['SP_Latitude'].between(ymin, ymax, inclusive=True)]
 		return data['SavePointID']
 
-	def read_storm_conds(self, path_to_data, ts_input):
+	def read_storm_conds(self, path_to_data, ts_input, ts_delete_step_size):
 		""" reading the input storm conditions. these are used as input to the 
 			neural net"""
 		missing_storms = os.path.join(path_to_data, 'MissingStorms_20.txt')
@@ -79,6 +80,8 @@ class CHS_DataSet(Dataset):
 				storm_data = np.pad(storm_data, ((pad_width,0), (0,0)), 
 							'constant', constant_values=self.pad_type)
 				data[i] = storm_data
+			if ts_delete_step_size != 0:
+				data = data[:, 0::ts_delete_step_size+1, :]
 			self.storms = unique_storms.astype(int)
 
 		elif ts_input == False:
@@ -158,7 +161,7 @@ if __name__ == "__main__":
 
 	# dataset class
 	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, ts_input=True,
-		ts_output=False)
+		ts_output=False, ts_delete_step_size=4)
 	print('setup dataset class')
 
 	# computing size of train and test datasets
