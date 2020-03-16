@@ -82,6 +82,7 @@ class CHS_DataSet(Dataset):
 				data[i] = storm_data
 			if ts_delete_step_size != 0:
 				data = data[:, 0::ts_delete_step_size+1, :]
+
 			self.storms = unique_storms.astype(int)
 
 		elif ts_input == False:
@@ -161,7 +162,7 @@ if __name__ == "__main__":
 
 	# dataset class
 	dataset = CHS_DataSet(path_to_data, xmin, xmax, ymin, ymax, ts_input=True,
-		ts_output=False, ts_delete_step_size=4)
+		ts_output=False, ts_delete_step_size=0)
 	print('setup dataset class')
 
 	# computing size of train and test datasets
