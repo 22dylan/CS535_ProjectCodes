@@ -21,14 +21,14 @@ path_to_models = os.path.join(os.getcwd(), 'LSTM_training_results',
 						'Model_results')
 models = [
 			"LSTM_B15_h100_l1_bbS",
-			"LSTM_LL1_B15_h100_l1_bbS",
-			"LSTM_LL2_B15_h100_l1_bbS",
+			"LSTM_LL1_B15_h256_l1_bbS",
+			"LSTM_LL2_B15_h256_l1_bbS",
 			
-			"LSTM_LL1_B15_h100_l1_bbM",
-			"LSTM_LL2_B15_h100_l1_bbM",
+			# "LSTM_LL1_B15_h100_l1_bbM",
+			# "LSTM_LL2_B15_h100_l1_bbM",
 			
-			"LSTM_LL1_B15_h100_l1_bbL",
-			"LSTM_LL2_B15_h100_l1_bbL",
+			# "LSTM_LL1_B15_h100_l1_bbL",
+			# "LSTM_LL2_B15_h100_l1_bbL",
 			  ]
 
 model_names = [
@@ -58,9 +58,9 @@ cbar_axes = [
 			[0.83, 0.105, 0.02, 0.78],		# lg. bounding box
 			[0.83, 0.105, 0.02, 0.78]
 			]
-cbar_max = [0.35, 0.35, 0.35, 
-			0.7, 0.7,
-			0.4, 0.4
+cbar_max = [1.0, 1.0, 1.0, 
+			1.0, 1.0,
+			1.0, 1.0
 			]
 
 for i, model in enumerate(models):
@@ -73,7 +73,7 @@ for i, model in enumerate(models):
 	target = pd.read_csv(target).mean(axis=0)
 
 	error = predict-target
-	
+	print(error.max(), error.min())
 	sp = error.index.to_list()	
 	sp = [(i.split('_')[1]) for i in sp]
 	sp2coord_temp = sp2coord[sp2coord['SavePointID'].isin(sp)]
