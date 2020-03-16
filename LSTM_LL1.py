@@ -177,7 +177,7 @@ def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
 
     writer = SummaryWriter(log_dir='./log/template')
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
     epoch_out = []
     test_acc_out = []

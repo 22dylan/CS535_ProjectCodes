@@ -56,6 +56,8 @@ class Net(nn.Module):
                           batch_first=True
                         )
 
+        # self.fc1 = nn.Linear(hidden_size, 256)
+        # self.fc2 = nn.Linear(256, output_size)
         self.fc = nn.Linear(hidden_size, output_size)
         self.norm = nn.BatchNorm1d(hidden_size)
     
@@ -70,7 +72,9 @@ class Net(nn.Module):
         x = x.float()
         out, hidden = self.lstm(x, hidden)
         out = out[:,-1,:]
-        out = self.norm(out)
+        # out = self.norm(out)
+        # out = self.fc1(out)
+        # out = self.fc2(out)
         out = self.fc(out)
         return out
 
@@ -179,7 +183,7 @@ def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
 
     writer = SummaryWriter(log_dir='./log/template')
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
     epoch_out = []
     test_acc_out = []

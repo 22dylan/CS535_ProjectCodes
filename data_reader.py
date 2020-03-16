@@ -6,6 +6,7 @@ import scipy.io as io
 from torch.utils.data import Dataset
 from torch.utils.data import random_split
 from torch.utils.data import DataLoader
+from sklearn.preprocessing import normalize
 
 class CHS_DataSet(Dataset):
 
@@ -67,13 +68,15 @@ class CHS_DataSet(Dataset):
 
 			df = df[~df['Storm ID'].isin(missing_storms[0])]
 			data_temp = df.values
+			norm_temp = normalize(data_temp[:,1:9], axis=0, norm='max')
+			data_temp[:,1:9] = norm_temp #normalize all but the storm id
 			unique_storms = np.unique(data_temp[:,0])
 			data = np.empty((len(unique_storms), 337, 9))
 			data[:] = self.pad_type
 			for i, storm_id in enumerate(unique_storms):
 				storm_data = data_temp[data_temp[:,0]==storm_id, 1:]
 				pad_width = 337 - len(storm_data) 
-				storm_data = np.pad(storm_data, ((0,pad_width), (0,0)), 
+				storm_data = np.pad(storm_data, ((pad_width,0), (0,0)), 
 							'constant', constant_values=self.pad_type)
 				data[i] = storm_data
 			self.storms = unique_storms.astype(int)

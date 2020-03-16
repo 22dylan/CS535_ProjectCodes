@@ -7,25 +7,25 @@ import LSTM_LL2 as i3
 if __name__ == "__main__":
 
     ''' Model parameters to iterate through '''
-    BATCH_SIZE = 50 #[10, 25, 50]     # mini_batch size
+    BATCH_SIZE = 15 #[10, 25, 50]     # mini_batch size
     MAX_EPOCH = 50      # maximum epoch to train
-    hidden_size = 100 #[25,100,500,1000]    # size of hidden layer
+    hidden_size = 256 #[25,100,500,1000]    # size of hidden layer
     n_layers = 1        # number of lstm layers
 
 
 
     """ defining bounding box """
     # small bounding box
-    # xmin, xmax = -74.2754, -73.9374
-    # ymin, ymax = 40.4041, 40.6097
-    # box_size = 'S'
+    xmin, xmax = -74.2754, -73.9374
+    ymin, ymax = 40.4041, 40.6097
+    box_size = 'S'
 
     # i1.main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
-    #     box_size, xmin, xmax, ymin, ymax)
+        # box_size, xmin, xmax, ymin, ymax)
     # i2.main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
     #     box_size, xmin, xmax, ymin, ymax)
-    # i3.main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
-    #     box_size, xmin, xmax, ymin, ymax)
+    i3.main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
+        box_size, xmin, xmax, ymin, ymax)
 
 
 
@@ -45,13 +45,13 @@ if __name__ == "__main__":
 
 
     # large bounding box 
-    xmin, xmax = -77.9897, -66.2786
-    ymin, ymax = 35.7051, 45.5341
-    box_size = 'L'
+    # xmin, xmax = -77.9897, -66.2786
+    # ymin, ymax = 35.7051, 45.5341
+    # box_size = 'L'
 
     # i1.main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
         # box_size, xmin, xmax, ymin, ymax)
-    i2.main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
-        box_size, xmin, xmax, ymin, ymax)
+    # i2.main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
+    #     box_size, xmin, xmax, ymin, ymax)
     # i3.main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
     #     box_size, xmin, xmax, ymin, ymax)
