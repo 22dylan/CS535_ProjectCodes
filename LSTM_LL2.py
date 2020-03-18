@@ -60,6 +60,7 @@ class Net(nn.Module):
         # self.fc2 = nn.Linear(256, output_size)
         self.fc = nn.Linear(hidden_size, output_size)
         self.norm = nn.BatchNorm1d(hidden_size)
+        self.dropout = nn.Dropout()
     
     def forward(self, x):
         batch_size = np.shape(x)[0]
@@ -72,7 +73,8 @@ class Net(nn.Module):
         x = x.float()
         out, hidden = self.lstm(x, hidden)
         out = out[:,-1,:]
-        # out = self.norm(out)
+        out = self.dropout(out)
+        out = self.norm(out)
         # out = self.fc1(out)
         # out = self.fc2(out)
         out = self.fc(out)
@@ -126,8 +128,10 @@ def eval_net(net, dataloader):
 
 def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
             box_size, xmin, xmax, ymin, ymax):
-
-    key = 'LSTM_LL2_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
+    
+    ts_delete_step_size = 10
+    
+    key = 'LSTM_LL2_DO_B{}_h{}_l{}_bb{}_ss{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size, ts_delete_step_size)
 
     # path to data
     path_to_data = os.path.join(os.getcwd(), '..', 'data')
@@ -183,7 +187,8 @@ def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
 
     writer = SummaryWriter(log_dir='./log/template')
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    # optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.Adagrad(net.parameters())
 
     epoch_out = []
     test_acc_out = []

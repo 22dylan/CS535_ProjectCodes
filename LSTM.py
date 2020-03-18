@@ -118,7 +118,9 @@ def eval_net(net, dataloader):
 def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
             box_size, xmin, xmax, ymin, ymax):
 
-    key = 'LSTM_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
+    ts_delete_step_size = 10
+
+    key = 'LSTM_B{}_h{}_l{}_bb{}_ss{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size, ts_delete_step_size)
 
     # path to data
     path_to_data = os.path.join(os.getcwd(), '..', 'data')
@@ -172,7 +174,8 @@ def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
 
     writer = SummaryWriter(log_dir='./log/template')
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    # optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.Adagrad(net.parameters())
 
     epoch_out = []
     test_acc_out = []

@@ -56,6 +56,7 @@ class Net(nn.Module):
                           batch_first=True
                         )
 
+        self.dropout = nn.Dropout()
         self.fc = nn.Linear(hidden_size, output_size)
     
     def forward(self, x):
@@ -69,6 +70,7 @@ class Net(nn.Module):
         x = x.float()
         out, hidden = self.lstm(x, hidden)
         out = out[:,-1,:]
+        out = self.dropout(out)
         out = self.fc(out)
         return out
 
@@ -121,7 +123,9 @@ def eval_net(net, dataloader):
 def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
             box_size, xmin, xmax, ymin, ymax):
 
-    key = 'LSTM_LL1_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
+    ts_delete_step_size = 10
+
+    key = 'LSTM_LL1_DO_B{}_h{}_l{}_bb{}_ss{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size,ts_delete_step_size)
 
     # path to data
     path_to_data = os.path.join(os.getcwd(), '..', 'data')
@@ -135,7 +139,8 @@ def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
                             ymin, ymax, 
                             ts_input=True,
                             ts_output=False, 
-                            pad_type=0.0)
+                            pad_type=0.0,
+                            ts_delete_step_size=ts_delete_step_size)
     
     input_size = np.shape(dataset.storm_conds)[2]  # number of input
     output_size = len(dataset.target[0]) #output size, needed to configure model
@@ -177,7 +182,8 @@ def main(BATCH_SIZE, MAX_EPOCH, hidden_size, n_layers,
 
     writer = SummaryWriter(log_dir='./log/template')
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    # optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.Adagrad(net.parameters())
 
     epoch_out = []
     test_acc_out = []

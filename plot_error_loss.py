@@ -11,14 +11,18 @@ plt.style.use('seaborn')
 
 #Select which key to plot results for
 BATCH_SIZE = 15     # mini_batch size
-MAX_EPOCH = 50      # maximum epoch to train
-hidden_size = 100    # size of hidden layer
-n_layers = 1        # number of lstm layers
-box_size = 'L' #'M' 'L'
+# MAX_EPOCH = 50      # maximum epoch to train
+hidden_size = 256    # size of hidden layer
+n_layers = 2        # number of lstm layers
+box_size = 'S' #'M' 'L'
+ts_delete_step_size = 10
 
 # key = 'LSTM_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
-key = 'LSTM_LL1_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
+# key = 'LSTM_LL1_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
 # key = 'LSTM_LL2_B{}_h{}_l{}_bb{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size)
+# key = 'LSTM_B{}_h{}_l{}_bb{}_ss{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size,ts_delete_step_size)
+# key = 'LSTM_LL1_DO_B{}_h{}_l{}_bb{}_ss{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size,ts_delete_step_size)
+key = 'LSTM_LL2_DO_B{}_h{}_l{}_bb{}_ss{}' .format(BATCH_SIZE, hidden_size, n_layers, box_size,ts_delete_step_size)
 
 
 path_to_results = os.path.join(os.getcwd(), 'LSTM_training_results', '{}_results.csv'.format(key))
